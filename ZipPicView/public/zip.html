@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>View Zip</title>
+<link rel="stylesheet" href="css/pure/0.6.0/pure-min.css">
+<link rel="stylesheet" href="css/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/font-awesome.min.css">
+</head>
+<body>
+	<script src="js/jquery-2.1.4.min.js"></script>
+	<script src="js/URI.js"></script>
+	<script src="js/mustache.js"></script>
+	<script src="/js/zip.js"></script>
+	
+	<script id="menu_tmpl" type="x-tmpl-mustache">
+		<li class="pure-menu-item">
+			<a href="{{url}}" class="pure-menu-link"> 
+				{{{icon}}}
+				{{name}}
+			</a>
+		</li>
+	</script>
+	
+	<script id="item_dir_tmpl" type="x-tmpl-mustache">
+		<div class='item'>
+			<a href = '/zip.html?file={{file}}&innerFile={{innerFile}}'>
+				<i class='fa fa-folder-o'></i>
+				{{name}}
+			</a>
+		</div>
+	</script>
+	
+	<script id="item_image_tmpl" type="x-tmpl-mustache">
+		<div class='item'>
+			<a href = '/zip?file={{file}}&innerFile={{innerFile}}'>
+				<img src='/zip?file={{file}}&innerFile={{innerFile}}&size=150'></img>
+				<p>
+					<i class='fa fa-picture-o'></i>
+					{{name}}
+				</p>
+			</a>
+		</div>
+	</script>
+	
+	<div id="layout">
+		<div class="pure-menu" id="menu">
+			<p class="pure-menu-heading">View</p>
+			<ul class="pure-menu-list" id="menu_list">
+				<li class="pure-menu-item"><a class="pure-menu-link"
+					id="close"><i class="fa fa-close"></i> Close</a></li>
+				<li class="pure-menu-item"> <a class="pure-menu-link"
+					id="parent"><i class="fa fa-level-up"></i> Parent</a></li>
+			</ul>
+		</div>
+		<div id="main">
+			<p id="current"></p>
+			<div id="filelist"></div>
+		</div>
+	</div>
+	<div id="loading">
+		<p><i class="fa fa-spinner fa-pulse"></i> Please Wait</p>
+	</div>
+</body>
+</html>
