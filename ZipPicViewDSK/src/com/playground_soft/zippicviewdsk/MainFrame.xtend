@@ -40,6 +40,8 @@ import org.imgscalr.Scalr
 
 import static javax.imageio.ImageIO.*
 import static javax.swing.UIManager.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 
 class MainFrame extends JFrame {
 	static def main(String [] args) {
@@ -95,7 +97,17 @@ class MainFrame extends JFrame {
 						],
 						JSplitPane.LEFT
 					)
-					add(new JScrollPane(previewPanel), JSplitPane.RIGHT)
+					add(new JScrollPane(previewPanel) => [
+						addComponentListener(new ComponentAdapter() {
+							override componentResized(ComponentEvent e) {
+								val gridWidth = 250
+								val itemPerRow = e.component.width / gridWidth
+
+								val layout = previewPanel.getLayout as GridLayout
+								layout.columns = if(itemPerRow > 0) itemPerRow else 1
+							}
+						})
+					], JSplitPane.RIGHT)
 				], BorderLayout.CENTER)
 
 				add(progressBar, BorderLayout.SOUTH)
@@ -166,11 +178,11 @@ class MainFrame extends JFrame {
 			title = "Loading"
 			defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
 			contentPane => [
-				layout = new BorderLayout
-				add(new JLabel("Processing File"), BorderLayout.CENTER)
+				layout = new GridLayout(0, 1)
+				add(new JLabel("Processing File"))
 				add(new JProgressBar => [
 					indeterminate = true
-				], BorderLayout.SOUTH)
+				])
 			]
 			pack
 			locationRelativeTo = this
@@ -182,13 +194,13 @@ class MainFrame extends JFrame {
 				zipFile = new ZipFile(file.absolutePath)
 
 				val preFilterList = Collections.list(zipFile.entries)
-				
+
 				fileEntries = preFilterList.filter [
 					if(it.isDirectory) return true
-					for(format : readerFileSuffixes){
+					for (format : readerFileSuffixes) {
 						if(it.name.endsWith(format)) return true
 					}
-					return false 
+					return false
 				]
 				return null
 			}
@@ -220,7 +232,7 @@ class MainFrame extends JFrame {
 
 	def onTreeItemSelected() {
 		progressBar.value = 0
-		
+
 		if (zipFile == null) {
 			return
 		}
@@ -251,8 +263,8 @@ class MainFrame extends JFrame {
 				border = new TitledBorder(child.name.substring(path.length)) => [
 					titlePosition = TitledBorder.ABOVE_BOTTOM
 				]
-				minimumSize = new Dimension(250, 250)
-				preferredSize = new Dimension(250, 250)
+				minimumSize = new Dimension(220, 220)
+				preferredSize = new Dimension(220, 250)
 
 				addMouseListener(new MouseInputAdapter() {
 					override mouseClicked(MouseEvent e) {
@@ -303,7 +315,7 @@ class MainFrame extends JFrame {
 			progressBar.maximum = 100
 			progressBar.enabled = true
 			addPropertyChangeListener([
-				if(progressBar.value < progress)
+				if (progressBar.value < progress)
 					progressBar.value = progress
 			])
 		}
