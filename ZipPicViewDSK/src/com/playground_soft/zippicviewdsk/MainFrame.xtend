@@ -11,7 +11,6 @@ import java.io.File
 import java.util.ArrayList
 import java.util.Collections
 import java.util.List
-import javax.imageio.ImageIO
 import javax.swing.ImageIcon
 import javax.swing.JButton
 import javax.swing.JDialog
@@ -39,6 +38,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import org.eclipse.xtend.lib.annotations.Data
 import org.imgscalr.Scalr
 
+import static javax.imageio.ImageIO.*
 import static javax.swing.UIManager.*
 
 class MainFrame extends JFrame {
@@ -182,8 +182,13 @@ class MainFrame extends JFrame {
 				zipFile = new ZipFile(file.absolutePath)
 
 				val preFilterList = Collections.list(zipFile.entries)
+				
 				fileEntries = preFilterList.filter [
-					it.isDirectory || it.name.endsWith(".jpg") || it.name.endsWith(".jpeg") || it.name.endsWith(".png")
+					if(it.isDirectory) return true
+					for(format : readerFileSuffixes){
+						if(it.name.endsWith(format)) return true
+					}
+					return false 
 				]
 				return null
 			}
@@ -311,7 +316,7 @@ class MainFrame extends JFrame {
 
 				if (!entry.directory) {
 					var inputStream = file.getInputStream(entry)
-					var srcImage = ImageIO.read(inputStream)
+					var srcImage = read(inputStream)
 					var resized = Scalr.resize(srcImage, Scalr.Method.QUALITY, Scalr.Mode.AUTOMATIC, 200)
 
 					var value = new ImageEntry(i, resized)
