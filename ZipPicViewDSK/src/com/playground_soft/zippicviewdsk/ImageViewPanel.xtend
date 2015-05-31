@@ -2,9 +2,12 @@ package com.playground_soft.zippicviewdsk
 
 import java.awt.BorderLayout
 import java.awt.FlowLayout
+import java.io.File
+import java.io.FileOutputStream
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
 import javax.swing.JButton
+import javax.swing.JFileChooser
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -18,49 +21,57 @@ class ImageViewPanel extends JPanel {
 	int imageIndex
 	val JTabbedPane tab
 
-	val JButton next
-	val JButton prev
-	val JLabel filename
-	val JButton close
+	val JButton nextButton
+	val JButton previousButton
+	val JLabel filenameLabel
+	val JButton saveButton
+	val JButton closeButton
 
-	val JLabel label
+	val JLabel imageLabel
 	val int tabIndex
 
+	val JFileChooser fileChooser
+	
 	new(JTabbedPane tab, ZipFile zipFile, ZipArchiveEntry[] zipEntries, int index) {
 		this.tab = tab
 		this.zipFile = zipFile
 		this.zipEntries = zipEntries
 
-		next = new JButton("Next") => [
+		nextButton = new JButton("Next") => [
 			addActionListener[setImageIndex(imageIndex + 1)]
 		]
-		prev = new JButton("Prev") => [
+		previousButton = new JButton("Prev") => [
 			addActionListener[setImageIndex(imageIndex - 1)]
 		]
-		filename = new JLabel
-		close = new JButton("Close") => [
+		filenameLabel = new JLabel
+		closeButton = new JButton("Close") => [
 			addActionListener[tab.remove(this)]
 		]
+		saveButton = new JButton("Save As") => [
+			addActionListener[save]
+		]
 
-		label = new JLabel
+		imageLabel = new JLabel
 
 		layout = new BorderLayout
 
 		add(new JPanel => [
 			layout = new FlowLayout
-			add(prev)
-			add(next)
-			add(close)
+			add(previousButton)
+			add(nextButton)
+			add(saveButton)
+			add(closeButton)
 		], BorderLayout.NORTH)
 
-		add(new JScrollPane(label), BorderLayout.CENTER)
+		add(new JScrollPane(imageLabel), BorderLayout.CENTER)
 
-		add(filename, BorderLayout.SOUTH)
+		add(filenameLabel, BorderLayout.SOUTH)
 
 		tabIndex = tab.tabCount
 		tab.add(this)
 		tab.selectedIndex = tabIndex
-
+		
+		fileChooser = new JFileChooser
 		setImageIndex(index)
 	}
 
@@ -68,21 +79,48 @@ class ImageViewPanel extends JPanel {
 		val entry = zipEntries.get(index)
 		imageIndex = index
 
-		prev.enabled = imageIndex != 0
-		next.enabled = imageIndex != zipEntries.length - 1
+		previousButton.enabled = imageIndex != 0
+		nextButton.enabled = imageIndex != zipEntries.length - 1
 
 		var inputStream = zipFile.getInputStream(entry)
 		var image = ImageIO.read(inputStream)
+		inputStream.close
 
-		label.icon = new ImageIcon(image)
-		label.invalidate
-		label.repaint
+		imageLabel.icon = new ImageIcon(image)
+		imageLabel.invalidate
+		imageLabel.repaint
 
-		filename.text = entry.name
-		val slashIndex = entry.name.indexOf('/')
+		filenameLabel.text = entry.name
+		
 		tab.setTitleAt(
 			tabIndex,
-			if(slashIndex > 0) entry.name.substring(slashIndex + 1) else entry.name
+			extractFileName(entry)
 		)
+	}
+
+	def save() {
+		val entry = zipEntries.get(imageIndex)
+		
+		fileChooser.selectedFile = new File(extractFileName(entry))
+		if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
+			return
+
+		val reader = zipFile.getInputStream(entry)
+		val writer = new FileOutputStream(fileChooser.selectedFile)
+
+		val buffer = newByteArrayOfSize(4096)
+		var readCount = 0
+		while ((readCount = reader.read(buffer)) > 0) {
+			writer.write(buffer, 0, readCount)
+		}
+
+		reader.close
+		writer.close
+	}
+	
+	static def extractFileName(ZipArchiveEntry entry) {
+		val lastSlash = entry.name.lastIndexOf('/')
+		if(lastSlash >=0) entry.name.substring(lastSlash + 1)
+		else entry.name
 	}
 }

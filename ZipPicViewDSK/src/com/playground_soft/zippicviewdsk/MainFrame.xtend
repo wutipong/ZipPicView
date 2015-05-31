@@ -53,7 +53,6 @@ class MainFrame extends JFrame {
 		return;
 	}
 
-	File file = null
 	ZipFile zipFile = null
 	ZipArchiveEntry[] fileEntries = null
 
@@ -63,6 +62,7 @@ class MainFrame extends JFrame {
 
 	final JTabbedPane tab
 	UpdateThumnailWorker worker
+	final JFileChooser fileChooser 
 
 	new() {
 		super("ZipPicView")
@@ -119,6 +119,19 @@ class MainFrame extends JFrame {
 			add(tab, BorderLayout.CENTER)
 		]
 
+		fileChooser = new JFileChooser => [
+			fileFilter = new FileFilter {
+				override accept(File file) {
+					file.isDirectory || file.name.endsWith(".zip")
+				}
+
+				override getDescription() {
+					"Zip Files"
+				}
+			}
+
+		]
+		
 		minimumSize = new Dimension(1024, 768)
 		defaultCloseOperation = EXIT_ON_CLOSE
 	}
@@ -154,21 +167,10 @@ class MainFrame extends JFrame {
 	}
 
 	def openFile() {
-		val fileChooser = new JFileChooser => [
-			selectedFile = file
-			fileFilter = new FileFilter {
-				override accept(File file) {
-					file.isDirectory || file.name.endsWith(".zip")
-				}
-
-				override getDescription() {
-					"Zip Files"
-				}
-			}
-
-		]
 		if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
-			return if(worker != null) worker.cancel(true)
+			return ;
+			
+		if(worker != null) worker.cancel(true)
 		if(zipFile != null) zipFile.close
 
 		while (tab.tabCount != 1)
@@ -190,7 +192,7 @@ class MainFrame extends JFrame {
 
 		val filterWorker = new SwingWorker<Void, Void> {
 			override protected doInBackground() throws Exception {
-				file = fileChooser.selectedFile
+				val file = fileChooser.selectedFile
 				zipFile = new ZipFile(file.absolutePath)
 
 				val preFilterList = Collections.list(zipFile.entries)
