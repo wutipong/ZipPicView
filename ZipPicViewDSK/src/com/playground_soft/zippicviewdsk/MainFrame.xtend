@@ -42,11 +42,16 @@ import static javax.imageio.ImageIO.*
 import static javax.swing.UIManager.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import javax.swing.border.EtchedBorder
 
 class MainFrame extends JFrame {
 	static def main(String [] args) {
 		SwingUtilities.invokeLater [
-			UIManager.lookAndFeel = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"
+			try{
+				UIManager.lookAndFeel = "javax.swing.plaf.nimbus.NimbusLookAndFeel"
+			} catch(Exception e) {
+				UIManager.lookAndFeel = UIManager.systemLookAndFeelClassName
+			}
 			new MainFrame().visible = true
 		]
 
@@ -262,7 +267,9 @@ class MainFrame extends JFrame {
 			val index = i
 
 			previewPanel.add(new JLabel => [
-				border = new TitledBorder(child.name.substring(path.length)) => [
+				border = new TitledBorder(new EtchedBorder,
+					child.name.substring(path.length)
+				) => [
 					titlePosition = TitledBorder.ABOVE_BOTTOM
 				]
 				minimumSize = new Dimension(220, 220)

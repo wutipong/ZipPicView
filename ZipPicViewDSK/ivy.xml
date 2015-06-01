@@ -27,6 +27,5 @@
 	<dependencies>
 		<dependency org="org.apache.commons" name="commons-compress" rev="1.9"/>
 		<dependency org="org.imgscalr" name="imgscalr-lib" rev="4.2"/>
-		<dependency org="org.java.net.substance" name="substance" rev="6.0"/>
 	</dependencies>
 </ivy-module>

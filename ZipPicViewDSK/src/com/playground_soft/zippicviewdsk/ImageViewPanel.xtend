@@ -2,6 +2,7 @@ package com.playground_soft.zippicviewdsk
 
 import java.awt.BorderLayout
 import java.awt.FlowLayout
+import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileOutputStream
 import javax.imageio.ImageIO
@@ -11,9 +12,14 @@ import javax.swing.JFileChooser
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import javax.swing.JSpinner
 import javax.swing.JTabbedPane
+import javax.swing.SpinnerNumberModel
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
+import org.imgscalr.Scalr
+import org.imgscalr.Scalr.Method
+import org.imgscalr.Scalr.Mode
 
 class ImageViewPanel extends JPanel {
 	val ZipFile zipFile
@@ -27,10 +33,14 @@ class ImageViewPanel extends JPanel {
 	val JButton saveButton
 	val JButton closeButton
 
+	val JSpinner zoomSpinner
+	
 	val JLabel imageLabel
 	val int tabIndex
 
 	val JFileChooser fileChooser
+	
+	var BufferedImage originalImage
 	
 	new(JTabbedPane tab, ZipFile zipFile, ZipArchiveEntry[] zipEntries, int index) {
 		this.tab = tab
@@ -50,7 +60,17 @@ class ImageViewPanel extends JPanel {
 		saveButton = new JButton("Save As") => [
 			addActionListener[save]
 		]
-
+		
+		zoomSpinner = new JSpinner(	new SpinnerNumberModel(1.0, 0.01, 1.0, 0.1)) =>[
+			addChangeListener([
+				val zoom = zoomSpinner.value as Double
+				val width = originalImage.width * zoom
+				val height = originalImage.height * zoom
+				
+				updateImage(width as int, height as int)
+			])
+			editor = new JSpinner.NumberEditor(it, "###%")
+		]
 		imageLabel = new JLabel
 
 		layout = new BorderLayout
@@ -61,6 +81,7 @@ class ImageViewPanel extends JPanel {
 			add(nextButton)
 			add(saveButton)
 			add(closeButton)
+			add(zoomSpinner)
 		], BorderLayout.NORTH)
 
 		add(new JScrollPane(imageLabel), BorderLayout.CENTER)
@@ -83,21 +104,28 @@ class ImageViewPanel extends JPanel {
 		nextButton.enabled = imageIndex != zipEntries.length - 1
 
 		var inputStream = zipFile.getInputStream(entry)
-		var image = ImageIO.read(inputStream)
+		originalImage = ImageIO.read(inputStream)
 		inputStream.close
 
-		imageLabel.icon = new ImageIcon(image)
-		imageLabel.invalidate
-		imageLabel.repaint
-
-		filenameLabel.text = entry.name
+		zoomSpinner.value = 1.00
+		
+		updateImage(originalImage.width, originalImage.height)
+		
+		filenameLabel.text = '''«entry.name» - [«originalImage.width» x «originalImage.height»]''' 
 		
 		tab.setTitleAt(
 			tabIndex,
 			extractFileName(entry)
 		)
 	}
-
+	
+	def updateImage(int width, int height){
+		val image = Scalr.resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, width, height)
+		imageLabel.icon = new ImageIcon(image)	
+		imageLabel.invalidate
+		imageLabel.repaint
+	}
+	
 	def save() {
 		val entry = zipEntries.get(imageIndex)
 		
